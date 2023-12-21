@@ -1,28 +1,49 @@
 import { Injectable } from '@nestjs/common';
-import { PassportStrategy } from '@nestjs/passport';
-import { ExtractJwt, Strategy } from 'passport-jwt';
-import * as jwksRsa from 'jwks-rsa';
-import { ConfigService } from '@nestjs/config';
+import { AuthGuard, PassportStrategy } from '@nestjs/passport';
+import { BearerStrategy } from 'passport-azure-ad';
+
+const config = {
+  credentials: {
+    tenantID: '<tenant-id>',
+    clientID: '<client-id>',
+    audience: '<audience-id>',
+  },
+  metadata: {
+    authority: 'login.microsoftonline.com',
+    discovery: '.well-known/openid-configuration',
+    version: 'v2.0',
+  },
+  settings: {
+    validateIssuer: true,
+    passReqToCallback: false,
+    loggingLevel: 'info',
+  },
+};
+const EXPOSED_SCOPES = ['Files.Read'];//provide a scope of your azure AD
 
 @Injectable()
-export class AzureADStrategy extends PassportStrategy(Strategy, 'AzureAD') {
-  constructor(protected readonly configService: ConfigService) {
+export class AzureADStrategy extends PassportStrategy(
+  BearerStrategy,
+  'AzureAD'
+) {
+  constructor() {
     super({
-      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-      audience: configService.get('AZURE_AD_AUDIENCE'),
-      issuer: `https://sts.windows.net/${configService.get('AZURE_AD_TENANTID')}/`,
-      algorithms: ['RS256'],
-      ignoreExpiration: true,
-      secretOrKeyProvider: jwksRsa.passportJwtSecret({
-        cache: true,
-        rateLimit: true,
-        jwksRequestsPerMinute: 5,
-        jwksUri: `https://login.microsoftonline.com/${configService.get('AZURE_AD_TENANTID')}/discovery/v2.0/keys`,
-      }),
+      identityMetadata: `https://${config.metadata.authority}/${config.credentials.tenantID}/${config.metadata.version}/${config.metadata.discovery}`,
+      issuer: `https://${config.metadata.authority}/${config.credentials.tenantID}/${config.metadata.version}`,
+      clientID: config.credentials.clientID,
+      audience: config.credentials.audience,
+      validateIssuer: config.settings.validateIssuer,
+      passReqToCallback: config.settings.passReqToCallback,
+      loggingLevel: config.settings.loggingLevel,
+      loggingNoPII: false,
     });
   }
 
-  validate(payload: any) {
-    return payload;
+  async validate(profile: any): Promise<any> {
+    // Implement user validation and extraction of necessary user information from profile
+    // Example: Extract and store user details in a session
+    return profile;
   }
 }
+
+export const AzureADGuard = AuthGuard('AzureAD');
