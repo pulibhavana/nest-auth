@@ -4,9 +4,9 @@ import { BearerStrategy } from 'passport-azure-ad';
 
 const config = {
   credentials: {
-    tenantID: '<tenant-id>',
-    clientID: '<client-id>',
-    audience: '<audience-id>',
+    tenantID: '6fecd065-cb31-41b4-985c-60f2fdf1720f',
+    clientID: '4d3ca734-e0f4-4ea6-9bd8-c0fb74862e3b',
+    audience: '4d3ca734-e0f4-4ea6-9bd8-c0fb74862e3b',
   },
   metadata: {
     authority: 'login.microsoftonline.com',
@@ -19,12 +19,12 @@ const config = {
     loggingLevel: 'info',
   },
 };
-const EXPOSED_SCOPES = ['Files.Read'];//provide a scope of your azure AD
+// const EXPOSED_SCOPES = ['Files.Read']; //provide a scope of your azure AD
 
 @Injectable()
 export class AzureADStrategy extends PassportStrategy(
   BearerStrategy,
-  'AzureAD'
+  'AzureAD',
 ) {
   constructor() {
     super({
